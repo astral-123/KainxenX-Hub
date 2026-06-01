@@ -429,3 +429,5 @@ function library:CreateWindow(name, size, hidekey)
 	end
 	return window
 end
+
+return library
