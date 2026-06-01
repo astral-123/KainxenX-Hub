@@ -1,9 +1,7 @@
 local library = {flags = {}, items = {}}
 local players = game:GetService("Players")
 local uis = game:GetService("UserInputService")
-local runservice = game:GetService("RunService")
 local tweenservice = game:GetService("TweenService")
-local textservice = game:GetService("TextService")
 local coregui = game:GetService("CoreGui")
 local player = players.LocalPlayer
 local mouse = player:GetMouse()
@@ -11,8 +9,6 @@ local mouse = player:GetMouse()
 library.theme = {
 	font = Enum.Font.GothamMedium,
 	fontBold = Enum.Font.GothamBold,
-	fontsize = 12,
-	titlesize = 14,
 	windowBg = Color3.fromRGB(15, 17, 26),
 	sidebarBg = Color3.fromRGB(20, 23, 34),
 	sectorBg = Color3.fromRGB(22, 26, 38),
@@ -31,7 +27,7 @@ library.theme = {
 }
 
 local function makeTween(obj, props, t)
-	return tweenservice:Create(obj, TweenInfo.new(t or 0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), props)
+	tweenservice:Create(obj, TweenInfo.new(t or 0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), props):Play()
 end
 
 local function makeCorner(parent, radius)
@@ -54,11 +50,11 @@ local mouse_buttons = {
 	[Enum.UserInputType.MouseButton3] = "MB3",
 }
 
-function library:CreateWindow(name, size, hidebutton)
+function library:CreateWindow(name, size, hidekey)
 	local th = library.theme
-	local window = {Tabs = {}, hidekey = hidebutton or Enum.KeyCode.RightShift}
+	local window = {Tabs = {}, hidekey = hidekey or Enum.KeyCode.RightShift}
 	window.Main = Instance.new("ScreenGui", coregui)
-	window.Main.Name = "MaxHubLite"
+	window.Main.Name = "MaxHubUI"
 	if getgenv().uilib then getgenv().uilib:Destroy() end
 	getgenv().uilib = window.Main
 	local W, H = (size and size.X) or 600, (size and size.Y) or 400
@@ -95,7 +91,7 @@ function library:CreateWindow(name, size, hidebutton)
 	local minimized = false
 	minBtn.MouseButton1Down:Connect(function()
 		minimized = not minimized
-		makeTween(window.Frame, {Size = minimized and UDim2.fromOffset(W, 40) or UDim2.fromOffset(W, H)}, 0.3):Play()
+		makeTween(window.Frame, {Size = minimized and UDim2.fromOffset(W, 40) or UDim2.fromOffset(W, H)}, 0.3)
 		window.ContentArea.Visible = not minimized
 		window.Sidebar.Visible = not minimized
 	end)
@@ -150,7 +146,7 @@ function library:CreateWindow(name, size, hidebutton)
 		lbl.TextXAlignment = Enum.TextXAlignment.Left
 	end
 	function window:CreateTab(name)
-		local tab = {name = name, Sectors = {}}
+		local tab = {name = name}
 		tab.TabBtn = Instance.new("TextButton", window.TabContainer)
 		tab.TabBtn.Size = UDim2.new(1, -10, 0, 32)
 		tab.TabBtn.BackgroundTransparency = 1
@@ -275,8 +271,8 @@ function library:CreateWindow(name, size, hidebutton)
 				btn.Text = ""
 				function toggle:Set(v)
 					toggle.value = v
-					makeTween(track, {BackgroundColor3 = v and th.toggleOn or th.toggleOff}, 0.15):Play()
-					makeTween(knob, {Position = v and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2)}, 0.15):Play()
+					makeTween(track, {BackgroundColor3 = v and th.toggleOn or th.toggleOff}, 0.15)
+					makeTween(knob, {Position = v and UDim2.fromOffset(18, 2) or UDim2.fromOffset(2, 2)}, 0.15)
 					pcall(callback, v)
 				end
 				btn.MouseButton1Down:Connect(function() toggle:Set(not toggle.value) end)
@@ -395,7 +391,7 @@ function library:CreateWindow(name, size, hidebutton)
 				btn.BackgroundColor3 = th.tabActive
 				btn.Font = th.font; btn.TextSize = 11
 				btn.TextColor3 = th.textPrimary
-				btn.Text = typeof(kb.value) == "EnumItem" and kb.value.Name or tostring(kb.value)
+				btn.Text = typeof(kb.value) == "EnumItem" and kb.value.Name or tostring(kb.value):gsub("Enum.UserInputType.", "")
 				makeCorner(btn, 4)
 				local listening = false
 				btn.MouseButton1Down:Connect(function() listening = true; btn.Text = "..." end)
@@ -405,7 +401,7 @@ function library:CreateWindow(name, size, hidebutton)
 						if key == Enum.KeyCode.Keyboard then return end
 						listening = false
 						kb.value = key
-						btn.Text = mouse_buttons[key] or key.Name
+						btn.Text = mouse_buttons[key] or tostring(key):gsub("Enum.UserInputType.", ""):gsub("Enum.KeyCode.", "")
 						pcall(callback, key)
 					end
 				end)
@@ -422,16 +418,33 @@ function library:CreateWindow(name, size, hidebutton)
 				btn.Font = th.font; btn.TextSize = 12
 				btn.Text = text; btn.TextColor3 = th.textSecondary
 				btn.AutoButtonColor = false; makeCorner(btn, 4); makeStroke(btn, th.divider, 1)
-				btn.MouseEnter:Connect(function() makeTween(btn, {BackgroundColor3 = th.tabActive, TextColor3 = th.textPrimary}, 0.1):Play() end)
-				btn.MouseLeave:Connect(function() makeTween(btn, {BackgroundColor3 = th.buttonBg, TextColor3 = th.textSecondary}, 0.1):Play() end)
 				btn.MouseButton1Down:Connect(function() pcall(callback) end)
 				sector:FixSize()
 			end
 			return sector
 		end
 		table.insert(window.Tabs, tab)
+		if #window.Tabs == 1 then tab:Select() end
 		return tab
 	end
 	return window
 end
-return library
+
+local Window = library:CreateWindow("MaxHub Lite", Vector2.new(600, 400), Enum.KeyCode.RightShift)
+Window:AddSidebarSection("COMMON")
+local PlayerTab = Window:CreateTab("Player")
+local Helper = PlayerTab:CreateSector("Helper")
+local Movement = PlayerTab:CreateSector("Movement")
+Helper:AddParagraph("Ceci est un paragraphe de test sans emojis ni commentaires.")
+local FlyToggle = Helper:AddToggle("Fly Mode", false, function(v) print("Fly:", v) end)
+local FlySettings = FlyToggle:AddSettings()
+FlySettings:AddSlider("Fly Speed", 1, 5, 50, function(v) print("Speed:", v) end)
+Movement:AddKeybind("Action Key", Enum.UserInputType.MouseButton2, function(k) print("Key:", k) end)
+Movement:AddTextbox("Speed", "16", function(v) print("Input:", v) end)
+Movement:AddButton("Reset", function() print("Reset") end)
+Window:AddSidebarSection("MAIN")
+local CombatTab = Window:CreateTab("Combat")
+local VisualsTab = Window:CreateTab("Visuals")
+Window:AddSidebarSection("GLOBAL")
+local SettingsTab = Window:CreateTab("Settings")
+print("MaxHub Lite All-in-One charge.")
