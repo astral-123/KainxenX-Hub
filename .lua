@@ -429,22 +429,3 @@ function library:CreateWindow(name, size, hidekey)
 	end
 	return window
 end
-
-local Window = library:CreateWindow("MaxHub Lite", Vector2.new(600, 400), Enum.KeyCode.RightShift)
-Window:AddSidebarSection("COMMON")
-local PlayerTab = Window:CreateTab("Player")
-local Helper = PlayerTab:CreateSector("Helper")
-local Movement = PlayerTab:CreateSector("Movement")
-Helper:AddParagraph("Ceci est un paragraphe de test sans emojis ni commentaires.")
-local FlyToggle = Helper:AddToggle("Fly Mode", false, function(v) print("Fly:", v) end)
-local FlySettings = FlyToggle:AddSettings()
-FlySettings:AddSlider("Fly Speed", 1, 5, 50, function(v) print("Speed:", v) end)
-Movement:AddKeybind("Action Key", Enum.UserInputType.MouseButton2, function(k) print("Key:", k) end)
-Movement:AddTextbox("Speed", "16", function(v) print("Input:", v) end)
-Movement:AddButton("Reset", function() print("Reset") end)
-Window:AddSidebarSection("MAIN")
-local CombatTab = Window:CreateTab("Combat")
-local VisualsTab = Window:CreateTab("Visuals")
-Window:AddSidebarSection("GLOBAL")
-local SettingsTab = Window:CreateTab("Settings")
-print("MaxHub Lite All-in-One charge.")
